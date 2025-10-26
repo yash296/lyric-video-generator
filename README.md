@@ -63,14 +63,47 @@ The parser strips HTML tags and supports `\N` for manual line breaks.
 ffmpeg -i lyric-video.webm -c:v libx264 -pix_fmt yuv420p -c:a aac lyric-video.mp4
 ```
 
-## Node.js Alternative (Optional)
+## Node.js CLI (Headless Rendering)
 
-If you need a headless/CLI flow, you can:
+Render without a browser using the provided Node-based CLI. It draws frames with `@napi-rs/canvas` and muxes with `ffmpeg-static`.
 
-- Render frames with `node-canvas` and your chosen background & lyric drawing logic
-- Use FFmpeg to mux frames and the MP3 into MP4/H.264
+### Install
 
-This repo focuses on the browser implementation to satisfy offline, non-AI requirements.
+```bash
+npm install
+```
+
+On Linux you may also need system packages for font rendering (freetype, fontconfig). `@napi-rs/canvas` docs have details.
+
+### Usage
+
+```bash
+npm run render -- \
+  --audio /path/to/song.mp3 \
+  --srt /path/to/lyrics.srt \
+  --out out.mp4 \
+  --resolution 1920x1080 \
+  --fps 30 \
+  --bg gradient \
+  --bg-speed 0.3 \
+  --font-family "Inter, system-ui, sans-serif" \
+  --font-size 56 \
+  --font-color #ffffff \
+  --stroke-color #000000 \
+  --lyric-y 50
+```
+
+Optional: register a custom font for consistent output
+
+```bash
+npm run render -- --audio song.mp3 --srt lyrics.srt --font-file ./fonts/MyFont.otf --font-family "MyFont"
+```
+
+Notes:
+
+- Output is H.264 MP4 with AAC audio (`-crf 18`, `-preset veryfast`). Adjust by editing `cli/render.js`.
+- Duration is read via `ffprobe-static`; if missing, it falls back to the SRT’s last timestamp.
+- Backgrounds and lyric styling match the browser logic closely for parity.
 
 ## License
 

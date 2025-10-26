@@ -1,0 +1,16 @@
+{
+  "name": "brickoven-lyrics",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lyric video generator - browser app with optional Node.js CLI renderer",
+  "type": "module",
+  "scripts": {
+    "render": "node cli/render.js"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.60",
+    "commander": "^12.1.0",
+    "ffmpeg-static": "^5.2.0",
+    "ffprobe-static": "^3.1.0"
+  }
+}
