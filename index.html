@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lyric Video Generator</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Lyric Video Generator</h1>
+    </header>
+
+    <main>
+      <section class="io">
+        <div class="field">
+          <label for="audioInput">MP3 Audio</label>
+          <input type="file" id="audioInput" accept="audio/mpeg,audio/mp3" />
+        </div>
+        <div class="field">
+          <label for="srtInput">SRT Lyrics</label>
+          <input type="file" id="srtInput" accept=".srt,text/plain" />
+        </div>
+        <details>
+          <summary>Video Settings</summary>
+          <div class="grid">
+            <label
+              >Resolution
+              <select id="resolution">
+                <option value="1280x720">1280x720 (HD)</option>
+                <option value="1920x1080" selected>1920x1080 (Full HD)</option>
+                <option value="1080x1080">1080x1080 (Square)</option>
+                <option value="1080x1920">1080x1920 (Vertical)</option>
+              </select>
+            </label>
+            <label
+              >Frame rate
+              <input
+                type="number"
+                id="fps"
+                value="30"
+                min="15"
+                max="60"
+                step="1"
+              />
+            </label>
+            <label
+              >Background
+              <select id="bgType">
+                <option value="gradient" selected>Gradient</option>
+                <option value="shapes">Moving Shapes</option>
+              </select>
+            </label>
+            <label
+              >Bg speed
+              <input
+                type="number"
+                id="bgSpeed"
+                value="0.3"
+                step="0.1"
+                min="0"
+                max="5"
+              />
+            </label>
+            <label
+              >Lyric font
+              <input
+                type="text"
+                id="fontFamily"
+                value="Inter, system-ui, sans-serif"
+              />
+            </label>
+            <label
+              >Font size (px)
+              <input
+                type="number"
+                id="fontSize"
+                value="56"
+                min="12"
+                max="160"
+              />
+            </label>
+            <label
+              >Font color
+              <input type="color" id="fontColor" value="#ffffff" />
+            </label>
+            <label
+              >Stroke color
+              <input type="color" id="strokeColor" value="#000000" />
+            </label>
+            <label
+              >Position (Y %, 0-100)
+              <input type="number" id="lyricY" value="50" min="0" max="100" />
+            </label>
+          </div>
+        </details>
+        <div class="actions">
+          <button id="startBtn" disabled>Start Render</button>
+          <button id="cancelBtn" disabled>Cancel</button>
+          <button id="downloadBtn" disabled>Download</button>
+        </div>
+        <div class="progress">
+          <progress id="progress" value="0" max="1"></progress>
+          <span id="status">Idle</span>
+        </div>
+      </section>
+
+      <section class="preview">
+        <canvas id="canvas" width="1920" height="1080"></canvas>
+        <audio id="audio" controls></audio>
+      </section>
+    </main>
+
+    <footer>
+      <small>All processing happens locally in your browser. No AI used.</small>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
