@@ -26,6 +26,10 @@ program
   .option("-R, --resolution <WxH>", "Resolution, e.g. 1920x1080", "1920x1080")
   .option("--bg <type>", "Background type: gradient|shapes", "gradient")
   .option("--bg-speed <number>", "Background speed scalar", "0.3")
+  .option("--crf <n>", "x264 CRF (lower=better), default 18", "18")
+  .option("--preset <name>", "x264 preset (ultrafast..placebo)", "veryfast")
+  .option("--threads <n>", "Encoder threads (0=auto)", "0")
+  .option("--pipe-format <raw|png>", "Pipe raw frames or PNGs", "raw")
   .option("--font-family <name>", "Font family", "Inter, system-ui, sans-serif")
   .option("--font-file <path>", "Optional .ttf/.otf font file to register")
   .option("--font-size <px>", "Font size in px", "56")
@@ -285,6 +289,10 @@ async function main() {
   const fps = Math.max(15, Math.min(60, parseInt(opts.fps || "30", 10)));
   const bgType = (opts.bg || "gradient").toLowerCase();
   const bgSpeed = parseFloat(opts.bgSpeed || "0.3");
+  const crf = String(opts.crf || "18");
+  const preset = String(opts.preset || "veryfast");
+  const threads = String(opts.threads || "0");
+  const pipeFormat = (opts.pipeFormat || "raw").toLowerCase();
   const style = {
     fontFamily: opts.fontFamily,
     fontSize: opts.fontSize,
@@ -337,16 +345,25 @@ async function main() {
   const ffmpeg = ffmpegPath;
   if (!ffmpeg) throw new Error("ffmpeg binary not found (ffmpeg-static).");
 
-  const ffArgs = [
-    "-y",
-    // video pipe
-    "-f",
-    "image2pipe",
-    "-r",
-    String(fps),
-    "-i",
-    "pipe:0",
-    // audio file
+  const useRawPipe = pipeFormat === "raw";
+  const ffArgs = ["-y"];
+  if (useRawPipe) {
+    ffArgs.push(
+      "-f",
+      "rawvideo",
+      "-pix_fmt",
+      "rgba",
+      "-s",
+      `${width}x${height}`,
+      "-r",
+      String(fps),
+      "-i",
+      "pipe:0"
+    );
+  } else {
+    ffArgs.push("-f", "image2pipe", "-r", String(fps), "-i", "pipe:0");
+  }
+  ffArgs.push(
     "-i",
     audioPath,
     "-shortest",
@@ -359,17 +376,19 @@ async function main() {
     "-pix_fmt",
     "yuv420p",
     "-crf",
-    "18",
+    crf,
     "-preset",
-    "veryfast",
+    preset,
+    "-threads",
+    threads,
     "-c:a",
     "aac",
     "-b:a",
     "192k",
     "-movflags",
     "+faststart",
-    outPath,
-  ];
+    outPath
+  );
 
   const proc = spawn(ffmpeg, ffArgs, { stdio: ["pipe", "inherit", "inherit"] });
 
@@ -389,10 +408,17 @@ async function main() {
     // Lyrics
     drawLyric(ctx, canvas, lyrics, t, style);
 
-    // Write frame as PNG to ffmpeg stdin (await encode and handle backpressure)
-    const png = await canvas.encode("png");
-    if (!proc.stdin.write(png)) {
-      await new Promise((resolve) => proc.stdin.once("drain", resolve));
+    if (useRawPipe) {
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const frame = Buffer.from(imageData.data);
+      if (!proc.stdin.write(frame)) {
+        await new Promise((resolve) => proc.stdin.once("drain", resolve));
+      }
+    } else {
+      const png = await canvas.encode("png");
+      if (!proc.stdin.write(png)) {
+        await new Promise((resolve) => proc.stdin.once("drain", resolve));
+      }
     }
 
     if (i % Math.max(1, Math.floor(fps)) === 0) {

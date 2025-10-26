@@ -90,7 +90,11 @@ npm run render -- \
   --font-size 56 \
   --font-color #ffffff \
   --stroke-color #000000 \
-  --lyric-y 50
+  --lyric-y 50 \
+  --pipe-format raw \
+  --preset veryfast \
+  --crf 18 \
+  --threads 0
 ```
 
 Optional: register a custom font for consistent output
@@ -101,9 +105,29 @@ npm run render -- --audio song.mp3 --srt lyrics.srt --font-file ./fonts/MyFont.o
 
 Notes:
 
-- Output is H.264 MP4 with AAC audio (`-crf 18`, `-preset veryfast`). Adjust by editing `cli/render.js`.
+- Output is H.264 MP4 with AAC (`--crf 18`, `--preset veryfast` by default). Adjust with flags or edit `cli/render.js`.
 - Duration is read via `ffprobe-static`; if missing, it falls back to the SRT’s last timestamp.
 - Backgrounds and lyric styling match the browser logic closely for parity.
+
+### Performance tuning
+
+- Pipe format: `--pipe-format raw` is fastest (streams raw RGBA). Use `--pipe-format png` to reduce pipe bandwidth at the cost of per-frame PNG encoding.
+- Encoder speed/quality: tune `--preset` and `--crf`.
+  - Lower `--crf` = higher quality, larger files. Typical range 18–23.
+  - Faster `--preset` (e.g., `ultrafast`) = faster encodes, larger files.
+- Threads: `--threads 0` lets x264 auto-pick; set a number to limit CPU.
+
+Examples:
+
+```bash
+# Max speed (larger file)
+npm run render -- --audio song.mp3 --srt lyrics.srt \
+  --pipe-format raw --preset ultrafast --crf 20 --threads 0
+
+# Balanced
+npm run render -- --audio song.mp3 --srt lyrics.srt \
+  --pipe-format raw --preset veryfast --crf 18 --threads 0
+```
 
 ## License
 
